@@ -36,8 +36,8 @@ namespace Adrenak.Tork {
 
 		void SyncRotation() {
 			transform.localEulerAngles = Vector3.zero;
-			angle += (Time.deltaTime * wheel.Velocity.z) / (2 * Mathf.PI * wheel.radius) * 360;
-			transform.Rotate(new Vector3(0, 1, 0), wheel.steerAngle - transform.localEulerAngles.y);
+			angle += (Time.deltaTime * wheel.sharedData.velocity.z) / (2 * Mathf.PI * wheel.wheelConfig.wheelRadius) * 360;
+			transform.Rotate(new Vector3(0, 1, 0), wheel.sharedData.steerAngle - transform.localEulerAngles.y);
 			transform.Rotate(new Vector3(1, 0, 0), angle);
 		}
 	}

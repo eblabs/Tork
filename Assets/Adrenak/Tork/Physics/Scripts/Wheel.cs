@@ -3,15 +3,22 @@
 using UnityEditor;
 #endif
 
+using System;
+
 namespace Adrenak.Tork {
 	public class Wheel : MonoBehaviour {
-		[Tooltip("The radius of the wheel")]
-		/// <summary>
-		/// The radius of the wheel
-		/// </summary>
-		public float radius = 0.5f;
 
-		[Header("Spring")]
+
+        // get some info from the user
+        public BasicWheelConfig wheelConfig;
+
+        //[Tooltip("The radius of the wheel")]
+        /// <summary>
+        /// The radius of the wheel
+        /// </summary>
+        //public float radius = 0.5f;
+
+        [Header("Spring")]
 		[Tooltip("How far the spring expands when it is in air.")]
 		/// <summary>
 		/// How far the spring expands when it is in air.
@@ -91,68 +98,43 @@ namespace Adrenak.Tork {
 		/// True causes the force to be applied only along the wheels upward direction
 		/// causing causing it to not slow down from collisions
 		/// </summary>
-		public bool fakeNormals;
+		public bool useFakeNormals;
 
-		/// <summary>
-		/// The layers used for wheel raycast
-		/// </summary>
-		public LayerMask m_RaycastLayers;
-
-		/// <summary>
-		/// The velocity of the wheel (at the raycast hit point) in world space
-		/// </summary>
-		public Vector3 Velocity { get; private set; }
-
-		/// <summary>
-		/// The angle by which the wheel is turning
-		/// </summary>
-		public float steerAngle { get; set; }
-
-		/// <summary>
-		/// The torque applied to the wheel for moving in the forward and backward direction
-		/// </summary>
-		public float motorTorque { get; set; }
-
-		/// <summary>
-		/// The torque the brake is applying on the wheel
-		/// </summary>
-		public float brakeTorque { get; set; }
-
-		/// <summary>
-		/// Whether the wheel is touching the ground
-		/// </summary>
-		public bool isGrounded { get; private set; }
-
-		/// <summary>
-		/// The distance to which the spring of the wheel is compressed
-		/// </summary>
-		public float CompressionDistance { get; private set; }
+        [Header("Forces and Suspension Info")]
+        /// <summary>
+        /// The distance to which the spring of the wheel is compressed
+        /// </summary>
+        public float CompressionDistance;
 		float m_PrevCompressionDist;
 
-		/// <summary>
-		/// The ratio of compression distance and suspension distance
-		/// 0 when the wheel is entirely uncompressed, 
-		/// 1 when the wheel is entirely compressed
-		/// </summary>
-		public float CompressionRatio { get; private set; }
+        /// <summary>
+        /// The ratio of compression distance and suspension distance
+        /// 0 when the wheel is entirely uncompressed, 
+        /// 1 when the wheel is entirely compressed
+        /// </summary>
+        public float CompressionRatio;
 
-		/// <summary>
-		/// The raycast hit point of the wheel
-		/// </summary>
-		public RaycastHit Hit { get { return m_Hit; } }
-		RaycastHit m_Hit;
+        /// <summary>
+        /// The force the spring exerts on the rigidbody
+        /// </summary>
+        public Vector3 SpringForce;
 
-		/// <summary>
-		/// The force the spring exerts on the rigidbody
-		/// </summary>
-		public Vector3 SpringForce { get; private set; }
 
-		Ray m_Ray;
-		new Rigidbody rigidbody;
-		const float k_RayStartHeight = 1;
+		private Rigidbody rigidbody;
+        private float k_RayStartHeight = 1;
 
-		void Start() {
-			m_Ray = new Ray();
+        private WheelCast wheelcast;
+        private Transform suspensionAnchor;
+
+
+
+        // data containers
+        public InternalData internalData;
+        public SharedData sharedData;
+
+        public WheelCast.HitData active_hit_data;
+
+        void Start() {
 
 			// Remove rigidbody component from the wheel
 			rigidbody = GetComponent<Rigidbody>();
@@ -161,133 +143,225 @@ namespace Adrenak.Tork {
 
 			// Get the rigidbody component from the parent
 			rigidbody = GetComponentInParent<Rigidbody>();
-		}
+
+            // add wheelcast child object
+            GameObject tmp;
+            tmp = new GameObject("wheelcast");
+            tmp.transform.SetParent(this.transform);
+            wheelcast = tmp.AddComponent<WheelCast>();
+            wheelcast.wheelConfig = wheelConfig;
+            wheelcast.PrepWheelcastRayData(this.transform, wheelConfig.wheelRadius, suspensionDistance, k_RayStartHeight);
+
+            // suspension anchor 
+            suspensionAnchor = new GameObject("Anchor").transform;
+            suspensionAnchor.transform.SetParent(this.transform);
+            suspensionAnchor.position = this.transform.position + (this.transform.up * k_RayStartHeight);
+
+        }
 
 		void FixedUpdate() {
-			transform.localEulerAngles = new Vector3(0, steerAngle, 0);
-			CalculateSuspension();
+			transform.localEulerAngles = new Vector3(0, sharedData.steerAngle, 0);
+
+            SetupWheelcast();
+            CalculateSuspension();
 			CalculateFriction();
 		}
 
-		void CalculateSuspension() {
-			float rayLen = GetRayLen();
-			m_Ray.direction = -transform.up.normalized;
-			m_Ray.origin = transform.position + transform.up * k_RayStartHeight;
+        public void SetupWheelcast() {
 
-			bool didHit = WheelRaycast(rayLen, ref m_Hit);
-			// If we did not hit, relax the spring and return
-			if (!didHit) {
-				m_PrevCompressionDist = CompressionDistance;
-				CompressionDistance = CompressionDistance - Time.fixedDeltaTime * relaxRate;
-				CompressionDistance = Mathf.Clamp(CompressionDistance, 0, suspensionDistance);
 
-				isGrounded = false;
-				return;
-			}
+            // align wheelcast to axle position
+            internalData.suspension_distance = (GetRayLen() - k_RayStartHeight - CompressionDistance - wheelConfig.wheelRadius);
+            wheelcast.transform.position = transform.TransformPoint(-Vector3.up * internalData.suspension_distance);
+            wheelcast.ProcessRays();
 
-			var force = 0.0f;
-			isGrounded = true;
-			CompressionDistance = rayLen - Hit.distance;
-			CompressionDistance = Mathf.Clamp(CompressionDistance, 0, suspensionDistance);
-			CompressionRatio = Mathf.Clamp01(CompressionDistance / suspensionDistance);
+            // pass data along
+            //active_hit_data = wheelcast.shortest_output;
+            active_hit_data = wheelcast.average_output;
+            sharedData.isGrounded = active_hit_data.hasHit;
 
-			// Calculate the force from the springs compression using Hooke's Law
-			float springForce = stiffness * CompressionRatio;
-			force += springForce;
+            // calculate hit distance in suspension space
+            // get suspension axis aligned radius for hit point
+            internalData.local_hit_point = wheelcast.transform.InverseTransformPoint(active_hit_data.point);
+            internalData.local_hit_distance = Mathf.Abs(internalData.local_hit_point.y);
+            internalData.hit_radius = Mathf.Abs((internalData.local_hit_point.normalized * wheelConfig.wheelRadius).y);
+            internalData.full_hit_distance = Mathf.Abs(suspensionAnchor.transform.InverseTransformPoint(active_hit_data.point).y);
+            internalData.full_ray_length = suspensionDistance + internalData.hit_radius + k_RayStartHeight;
 
-			// Calculate the damping force based on compression rate of the spring
-			float rate = (CompressionDistance - m_PrevCompressionDist) / Time.fixedDeltaTime;
-			m_PrevCompressionDist = CompressionDistance;
+            // for situation when top of wheel is hit, todo
+            // if touching on top of wheel, inverse wheel offset 
+            if (internalData.local_hit_point.y > 0) {
 
-			float damperForce = rate * damping;
-			force += damperForce;
+                // reverse hit distance, rather than a hit at the top, indicate a pull at the bottom
+                internalData.full_hit_distance = internalData.hit_radius + (internalData.full_ray_length - internalData.full_hit_distance);
+            }
+        }
 
-			// When normals are faked, the spring force vector is not applied towards the wheel's center,
-			// instead it is resolved along the global Y axis and applied
-			// This helps maintain velocity over speed bumps, however may be unrealistic
-			if (fakeNormals)
-				SpringForce = Vector3.up * force;
-			else {
-				float fakedScale = Vector3.Dot(Hit.normal, transform.up);
+        void CalculateSuspension() {
+            // If we did not hit, relax the spring and return
+            if (!active_hit_data.hasHit)
+            {
+                m_PrevCompressionDist = CompressionDistance;
+                CompressionDistance = CompressionDistance - Time.fixedDeltaTime * relaxRate;
+                CompressionDistance = Mathf.Clamp(CompressionDistance, 0, suspensionDistance);
+                CompressionRatio = Mathf.Clamp01(CompressionDistance / suspensionDistance);
+                sharedData.isGrounded = false;
+                return;
+            }
+
+            var force = 0.0f;
+            sharedData.isGrounded = true;
+            internalData.localUpHitNormalDot = Vector3.Dot(active_hit_data.normal, transform.up);
+            internalData.fakedScale = internalData.localUpHitNormalDot * Mathf.Sign(internalData.localUpHitNormalDot);
+
+            // calculate compression distance and ratio
+            CompressionDistance = internalData.full_ray_length - internalData.full_hit_distance;
+            CompressionRatio = Mathf.Clamp01( CompressionDistance / suspensionDistance); // if we get overcompressed, allow the compression ratio to go beyond 1 for this moment
+            CompressionDistance = Mathf.Clamp(CompressionDistance, 0, suspensionDistance);
+
+            // Calculate the force from the springs compression using Hooke's Law
+            float springForce = stiffness * CompressionRatio;
+            force += springForce;
+
+            // Calculate the damping force based on compression rate of the spring
+            float rate = (CompressionDistance - m_PrevCompressionDist) / Time.fixedDeltaTime;
+            m_PrevCompressionDist = CompressionDistance;
+
+            float damperForce = rate * damping;
+            force += damperForce;
+
+            // When normals are faked, the spring force vector is not applied towards the wheel's center,
+            // instead it is resolved along the global Y axis and applied
+            // This helps maintain velocity over speed bumps, however may be unrealistic
+            if (useFakeNormals)
+                SpringForce = Vector3.up * force;
+            else
+            {
+                /*
+                float fakedScale = Vector3.Dot(Hit.normal, transform.up);
 				force *= fakedScale;
 				SpringForce = transform.up * force;
-			}
+                */
+                internalData.forceDirection = active_hit_data.normal;// Vector3.Lerp(Vector3.up, transform.up, Mathf.Clamp01(internalData.fakedScale));
+                SpringForce = internalData.forceDirection * force;
+            }
 
-			// Apply suspension force
-			rigidbody.AddForceAtPosition(SpringForce, (Hit.point));
-		}
-
-		bool WheelRaycast(float maxDistance, ref RaycastHit nearestHit) {
-			RaycastHit hit;
-			
-			if (Physics.Raycast(m_Ray.origin, m_Ray.direction, out hit, maxDistance, m_RaycastLayers)) {
-				nearestHit = hit;
-				return true;
-			}
-			return false;
+            // Apply suspension force
+            Debug.DrawRay(active_hit_data.point, SpringForce, Color.red);
+            rigidbody.AddForceAtPosition(SpringForce, (active_hit_data.point));
 		}
 
 		void CalculateFriction() {
-			Velocity = rigidbody.GetPointVelocity(Hit.point);
+            // opt out
+            if (!active_hit_data.hasHit) return;
 
-			if (!isGrounded) return;
+            // sample velocity
+            sharedData.velocity = rigidbody.GetPointVelocity(active_hit_data.point);
 
-			// Contact basis (can be different from wheel basis)
-			Vector3 normal = Hit.normal;
-			Vector3 side = transform.right;
-			Vector3 forward = transform.forward;
+            // Contact basis (can be different from wheel basis)
+            Vector3 normal = active_hit_data.normal;// Hit.normal;
+            Vector3 side = transform.right;
+            Vector3 forward = transform.forward;
 
-			// Apply less force if the vehicle is tilted
-			var angle = Vector3.Angle(normal, transform.up);
-			var multiplier = Mathf.Cos(angle * Mathf.Deg2Rad);
+            // Apply less force if the vehicle is tilted
+            var angle = Vector3.Angle(normal, transform.up);
+            float multiplier = Mathf.Cos(angle * Mathf.Deg2Rad);
 
-			// Calculate sliding velocity (velocity without normal force)
-			Vector3 sideVel = Vector3.Dot(Velocity, side) * side * multiplier;
-			Vector3 forwardVel = Vector3.Dot(Velocity, forward) * forward * multiplier;
-			Vector3 velocity2D = sideVel + forwardVel;
+            // Calculate sliding velocity (velocity without normal force)
+            Vector3 sideVel = Vector3.Dot(sharedData.velocity, side) * side * multiplier;
+            Vector3 forwardVel = Vector3.Dot(sharedData.velocity, forward) * forward * multiplier;
+            Vector3 velocity2D = sideVel + forwardVel;
 
-			Vector3 momentum = velocity2D * rigidbody.mass;
+            // contact forward normal
+            internalData.momentum = velocity2D;// * rigidbody.mass;
 
-			var latForce = Vector3.Dot(-momentum, side) * side * sidewaysGrip;
-			var longForce = Vector3.Dot(-momentum, forward) * forward * forwardGrip;
-			Vector3 frictionForce = latForce + longForce;
+            internalData.latForce = Vector3.Dot(-internalData.momentum, side) * side * sidewaysGrip;
+            internalData.longForce = Vector3.Dot(-internalData.momentum, forward) * forward * forwardGrip;
+            Vector3 frictionForce = Vector3.zero;
 
-			// Apply rolling friction
-			longForce *= 1 - rollingFriction;
+            frictionForce += internalData.longForce;
+            frictionForce += internalData.latForce;
 
-			// Apply brake force
-			var brakeForceMag = brakeTorque / radius;
-			brakeForceMag = Mathf.Clamp(brakeForceMag, 0, longForce.magnitude);
-			longForce -= longForce.normalized * brakeForceMag;
+            // Apply rolling friction
+            internalData.longForce *= 1 - rollingFriction;
 
-			frictionForce -= longForce;
-			rigidbody.AddForceAtPosition(frictionForce, Hit.point);
+            // Apply brake force
+            var brakeForceMag = sharedData.brakeTorque / wheelConfig.wheelRadius;
+            brakeForceMag = Mathf.Clamp(brakeForceMag, 0, internalData.longForce.magnitude);
+            internalData.longForce -= internalData.longForce.normalized * brakeForceMag;
+            frictionForce -= internalData.longForce;
 
-			rigidbody.AddForceAtPosition(forward * motorTorque / radius * forwardGrip, Hit.point);
-		}
+            Debug.DrawRay(active_hit_data.point, frictionForce, Color.blue);
+            rigidbody.AddForceAtPosition(frictionForce * rigidbody.mass, active_hit_data.point); //Hit.point
 
-		void AddForce(Vector3 force) {
-			if (Mathf.Approximately(force.magnitude, 0)) return;
-			rigidbody.AddForceAtPosition(force, Hit.point);
+            Debug.DrawRay(active_hit_data.point, forward * sharedData.motorTorque / wheelConfig.wheelRadius * forwardGrip, Color.magenta);
+            rigidbody.AddForceAtPosition(forward * sharedData.motorTorque / wheelConfig.wheelRadius * forwardGrip, active_hit_data.point);//Hit.point
+
 		}
 
 		float GetRayLen() {
-			return suspensionDistance + radius + k_RayStartHeight;
+			return suspensionDistance + wheelConfig.wheelRadius + k_RayStartHeight;
 		}
 
 	#if UNITY_EDITOR
 		void OnDrawGizmos() {
 			Handles.color = Color.yellow;
-			Handles.DrawWireDisc(transform.position, transform.right, radius);
+			Handles.DrawWireDisc(transform.position, transform.right, wheelConfig.wheelRadius);
 
 			Handles.color = Color.red;
 			var p1 = transform.position + transform.up * k_RayStartHeight;
 			var p2 = transform.position - transform.up * (GetRayLen() - k_RayStartHeight);
 			Handles.DrawLine(p1, p2);
 
-			var pos = transform.position + (-transform.up * (GetRayLen() - k_RayStartHeight - CompressionDistance - radius));
-			Handles.DrawWireDisc(pos, transform.right, radius);
+			var pos = transform.position + (-transform.up * (GetRayLen() - k_RayStartHeight - CompressionDistance - wheelConfig.wheelRadius));
+			Handles.DrawWireDisc(pos, transform.right, wheelConfig.wheelRadius);
 		}
-	#endif
-	}
+#endif
+
+        [Serializable]
+        public struct BasicWheelConfig
+        {
+            [Header("WheelSetup")]
+            public bool enable3DRaycasts;
+            public float wheelRadius;
+            public float wheelWidth;
+
+            [Header("Raycasts")]
+            public int rayCountRadial;
+            public int rayCountCrossSection;
+            public float span;
+
+            [HideInInspector]
+            public int raycastCount;
+
+            [Header("Layers")]
+            public LayerMask layer_mask;
+        }
+        [Serializable]
+        public struct InternalData
+        {
+            public float local_hit_distance;
+            public Vector3 local_hit_point;
+            public float hit_radius;
+            public float full_hit_distance;
+            public float full_ray_length;
+            public float suspension_distance;
+            public float fakedScale;
+            public float localUpHitNormalDot;
+            public Vector3 forceDirection;
+            public Vector3 latForce;
+            public Vector3 longForce;
+            public Vector3 momentum;
+        }
+
+        [Serializable]
+        public struct SharedData
+        {
+            public Vector3 velocity;
+            public float steerAngle;
+            public float motorTorque;
+            public float brakeTorque;
+            public bool isGrounded;
+        }
+    }
 }
