@@ -108,7 +108,7 @@ namespace Adrenak.Tork {
         /// <summary>
         /// The velocity of the wheel (at the raycast hit point) in world space
         /// </summary>
-        public Vector3 Velocity;
+        //public Vector3 Velocity;
 
         /// <summary>
         /// The angle by which the wheel is turning
@@ -306,17 +306,15 @@ namespace Adrenak.Tork {
             // Contact basis (can be different from wheel basis)
             Vector3 normal = active_hit_data.normal;// Hit.normal;
             Vector3 side = transform.right;
-            //side.y = 0;
             Vector3 forward = transform.forward;
-            //forward.y = 0;
 
             // Apply less force if the vehicle is tilted
             var angle = Vector3.Angle(normal, transform.up);
-            float multiplier = 1f;// Mathf.Abs(Vector3.Dot(normal, transform.up)); //1f;//Mathf.Cos(angle * Mathf.Deg2Rad);
+            float multiplier = Mathf.Cos(angle * Mathf.Deg2Rad);
 
             // Calculate sliding velocity (velocity without normal force)
-            Vector3 sideVel = Vector3.Dot(Velocity, side) * side * multiplier;
-            Vector3 forwardVel = Vector3.Dot(Velocity, forward) * forward * multiplier;
+            Vector3 sideVel = Vector3.Dot(internalData.velocity, side) * side * multiplier;
+            Vector3 forwardVel = Vector3.Dot(internalData.velocity, forward) * forward * multiplier;
             Vector3 velocity2D = sideVel + forwardVel;
 
             // contact forward normal
