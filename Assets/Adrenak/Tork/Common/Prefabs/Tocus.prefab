@@ -281,7 +281,6 @@ MonoBehaviour:
   forwardGrip: 1
   rollingFriction: 0.1
   fakeNormals: 1
-  Velocity: {x: 0, y: 0, z: 0}
   steerAngle: 0
   motorTorque: 0
   brakeTorque: 0
@@ -451,7 +450,6 @@ MonoBehaviour:
   forwardGrip: 1
   rollingFriction: 0.1
   fakeNormals: 1
-  Velocity: {x: 0, y: 0, z: 0}
   steerAngle: 0
   motorTorque: 0
   brakeTorque: 0
@@ -825,7 +823,6 @@ MonoBehaviour:
   forwardGrip: 1
   rollingFriction: 0.1
   fakeNormals: 1
-  Velocity: {x: 0, y: 0, z: 0}
   steerAngle: 0
   motorTorque: 0
   brakeTorque: 0
@@ -2078,7 +2075,6 @@ MonoBehaviour:
   forwardGrip: 1
   rollingFriction: 0.1
   fakeNormals: 1
-  Velocity: {x: 0, y: 0, z: 0}
   steerAngle: 0
   motorTorque: 0
   brakeTorque: 0

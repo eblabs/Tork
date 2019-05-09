@@ -2551,6 +2551,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4032909190173282, guid: 02e641040fb499c49a848e40f535164a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1913267727961014, guid: 02e641040fb499c49a848e40f535164a, type: 3}
       propertyPath: m_Layer
       value: 2
@@ -2686,7 +2690,7 @@ PrefabInstance:
     - target: {fileID: 114134873722668098, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
       propertyPath: wheelConfig.enable3DRaycasts
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 114134873722668098, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
@@ -2717,11 +2721,16 @@ PrefabInstance:
         type: 3}
       propertyPath: fakeNormals
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114134873722668098, guid: 02e641040fb499c49a848e40f535164a,
+        type: 3}
+      propertyPath: sidewaysGrip
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 114658946717326374, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
       propertyPath: wheelConfig.enable3DRaycasts
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 114658946717326374, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
@@ -2752,11 +2761,16 @@ PrefabInstance:
         type: 3}
       propertyPath: fakeNormals
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114658946717326374, guid: 02e641040fb499c49a848e40f535164a,
+        type: 3}
+      propertyPath: sidewaysGrip
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 114083747195237736, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
       propertyPath: wheelConfig.enable3DRaycasts
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 114083747195237736, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
@@ -2787,11 +2801,16 @@ PrefabInstance:
         type: 3}
       propertyPath: fakeNormals
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114083747195237736, guid: 02e641040fb499c49a848e40f535164a,
+        type: 3}
+      propertyPath: sidewaysGrip
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 114731894027573192, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
       propertyPath: wheelConfig.enable3DRaycasts
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 114731894027573192, guid: 02e641040fb499c49a848e40f535164a,
         type: 3}
@@ -2822,6 +2841,11 @@ PrefabInstance:
         type: 3}
       propertyPath: fakeNormals
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114731894027573192, guid: 02e641040fb499c49a848e40f535164a,
+        type: 3}
+      propertyPath: sidewaysGrip
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 02e641040fb499c49a848e40f535164a, type: 3}

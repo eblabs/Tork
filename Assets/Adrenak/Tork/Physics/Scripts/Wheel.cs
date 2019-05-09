@@ -238,8 +238,14 @@ namespace Adrenak.Tork {
             internalData.full_hit_distance = Mathf.Abs(suspensionAnchor.transform.InverseTransformPoint(active_hit_data.point).y);
             internalData.full_ray_length = suspensionDistance + internalData.hit_radius + k_RayStartHeight;
 
-            // for situation when top of wheel is hit
-            // todo, //if (internalData.local_hit_point.y>0)
+            // for situation when top of wheel is hit, todo
+            // if touching on top of wheel, inverse wheel offset 
+            if (internalData.local_hit_point.y > 0) {
+
+                internalData.full_hit_distance = internalData.hit_radius + (internalData.full_ray_length - internalData.full_hit_distance);//Mathf.Abs(suspensionAnchor.transform.InverseTransformPoint(active_hit_data.point).y);
+                //internalData.full_ray_length = suspensionDistance + internalData.hit_radius + k_RayStartHeight;
+
+            }
         }
 
         void CalculateSuspension() {
@@ -287,7 +293,7 @@ namespace Adrenak.Tork {
 				force *= fakedScale;
 				SpringForce = transform.up * force;
                 */
-                internalData.forceDirection = Vector3.Lerp(Vector3.up, transform.up, Mathf.Clamp01(internalData.fakedScale));
+                internalData.forceDirection = active_hit_data.normal;// Vector3.Lerp(Vector3.up, transform.up, Mathf.Clamp01(internalData.fakedScale));
                 SpringForce = internalData.forceDirection * force;
             }
 
