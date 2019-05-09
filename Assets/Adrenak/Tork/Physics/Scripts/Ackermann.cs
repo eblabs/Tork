@@ -24,11 +24,11 @@ namespace Adrenak.Tork {
 		}
 	
 		public float FrontRightRadius {
-			get { return AxleSeparation / Mathf.Sin(Mathf.Abs(m_FrontRight.steerAngle)); }
+			get { return AxleSeparation / Mathf.Sin(Mathf.Abs(m_FrontRight.sharedData.steerAngle)); }
 		}
 
 		public float FrontLeftRadius {
-			get { return AxleSeparation / Mathf.Sin(Mathf.Abs(m_FrontLeft.steerAngle)); }
+			get { return AxleSeparation / Mathf.Sin(Mathf.Abs(m_FrontLeft.sharedData.steerAngle)); }
 		}
 
 		private void Start() { }
@@ -38,17 +38,17 @@ namespace Adrenak.Tork {
 			FarAngle = GetFarAngle(angle, AxleWidth, AxleSeparation);
 
 			// The rear wheels are always at 0 steer in Ackermann
-			m_RearLeft.steerAngle = m_RearRight.steerAngle = 0;
+			m_RearLeft.sharedData.steerAngle = m_RearRight.sharedData.steerAngle = 0;
 
 			if (Mathf.Approximately(NearAngle, 0)) 
-				m_FrontRight.steerAngle = m_FrontLeft.steerAngle = 0;
+				m_FrontRight.sharedData.steerAngle = m_FrontLeft.sharedData.steerAngle = 0;
 			else if (NearAngle > 0) {
-				m_FrontRight.steerAngle = NearAngle;
-				m_FrontLeft.steerAngle = FarAngle;
+				m_FrontRight.sharedData.steerAngle = NearAngle;
+				m_FrontLeft.sharedData.steerAngle = FarAngle;
 			}
 			else if (NearAngle < 0) {
-				m_FrontLeft.steerAngle = NearAngle;
-				m_FrontRight.steerAngle = -FarAngle;
+				m_FrontLeft.sharedData.steerAngle = NearAngle;
+				m_FrontRight.sharedData.steerAngle = -FarAngle;
 			}
 		}
 

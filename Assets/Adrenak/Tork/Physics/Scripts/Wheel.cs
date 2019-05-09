@@ -98,38 +98,9 @@ namespace Adrenak.Tork {
 		/// True causes the force to be applied only along the wheels upward direction
 		/// causing causing it to not slow down from collisions
 		/// </summary>
-		public bool fakeNormals;
+		public bool useFakeNormals;
 
-		/// <summary>
-		/// The layers used for wheel raycast
-		/// </summary>
-		//public LayerMask m_RaycastLayers;
-
-        /// <summary>
-        /// The velocity of the wheel (at the raycast hit point) in world space
-        /// </summary>
-        //public Vector3 Velocity;
-
-        /// <summary>
-        /// The angle by which the wheel is turning
-        /// </summary>
-        public float steerAngle;
-
-        /// <summary>
-        /// The torque applied to the wheel for moving in the forward and backward direction
-        /// </summary>
-        public float motorTorque;
-
-        /// <summary>
-        /// The torque the brake is applying on the wheel
-        /// </summary>
-        public float brakeTorque;
-
-        /// <summary>
-        /// Whether the wheel is touching the ground
-        /// </summary>
-        public bool isGrounded;
-
+        [Header("Forces and Suspension Info")]
         /// <summary>
         /// The distance to which the spring of the wheel is compressed
         /// </summary>
@@ -144,48 +115,26 @@ namespace Adrenak.Tork {
         public float CompressionRatio;
 
         /// <summary>
-        /// The raycast hit point of the wheel
-        /// </summary>
-        //public RaycastHit Hit;
-		//RaycastHit m_Hit;
-
-        /// <summary>
         /// The force the spring exerts on the rigidbody
         /// </summary>
         public Vector3 SpringForce;
 
-		Ray m_Ray;
-		new Rigidbody rigidbody;
-		const float k_RayStartHeight = 1;
+
+		private Rigidbody rigidbody;
+        private float k_RayStartHeight = 1;
 
         private WheelCast wheelcast;
         private Transform suspensionAnchor;
 
-        [Serializable]
-        public struct InternalData
-        {
-            public float local_hit_distance;
-            public Vector3 local_hit_point;
-            public float hit_radius;
-            public float full_hit_distance;
-            public float full_ray_length;
-            public float suspension_distance;
-            public float fakedScale;
-            public float localUpHitNormalDot;
-            public Vector3 forceDirection;
-            public Vector3 latForce;
-            public Vector3 longForce;
-            public Vector3 momentum;
-            public Vector3 velocity;
-        }
 
-        // for internal data
+
+        // data containers
         public InternalData internalData;
+        public SharedData sharedData;
 
         public WheelCast.HitData active_hit_data;
 
         void Start() {
-			m_Ray = new Ray();
 
 			// Remove rigidbody component from the wheel
 			rigidbody = GetComponent<Rigidbody>();
@@ -211,7 +160,7 @@ namespace Adrenak.Tork {
         }
 
 		void FixedUpdate() {
-			transform.localEulerAngles = new Vector3(0, steerAngle, 0);
+			transform.localEulerAngles = new Vector3(0, sharedData.steerAngle, 0);
 
             SetupWheelcast();
             CalculateSuspension();
@@ -229,6 +178,7 @@ namespace Adrenak.Tork {
             // pass data along
             //active_hit_data = wheelcast.shortest_output;
             active_hit_data = wheelcast.average_output;
+            sharedData.isGrounded = active_hit_data.hasHit;
 
             // calculate hit distance in suspension space
             // get suspension axis aligned radius for hit point
@@ -242,9 +192,8 @@ namespace Adrenak.Tork {
             // if touching on top of wheel, inverse wheel offset 
             if (internalData.local_hit_point.y > 0) {
 
-                internalData.full_hit_distance = internalData.hit_radius + (internalData.full_ray_length - internalData.full_hit_distance);//Mathf.Abs(suspensionAnchor.transform.InverseTransformPoint(active_hit_data.point).y);
-                //internalData.full_ray_length = suspensionDistance + internalData.hit_radius + k_RayStartHeight;
-
+                // reverse hit distance, rather than a hit at the top, indicate a pull at the bottom
+                internalData.full_hit_distance = internalData.hit_radius + (internalData.full_ray_length - internalData.full_hit_distance);
             }
         }
 
@@ -256,12 +205,12 @@ namespace Adrenak.Tork {
                 CompressionDistance = CompressionDistance - Time.fixedDeltaTime * relaxRate;
                 CompressionDistance = Mathf.Clamp(CompressionDistance, 0, suspensionDistance);
                 CompressionRatio = Mathf.Clamp01(CompressionDistance / suspensionDistance);
-                isGrounded = false;
+                sharedData.isGrounded = false;
                 return;
             }
 
             var force = 0.0f;
-            isGrounded = true;
+            sharedData.isGrounded = true;
             internalData.localUpHitNormalDot = Vector3.Dot(active_hit_data.normal, transform.up);
             internalData.fakedScale = internalData.localUpHitNormalDot * Mathf.Sign(internalData.localUpHitNormalDot);
 
@@ -284,7 +233,7 @@ namespace Adrenak.Tork {
             // When normals are faked, the spring force vector is not applied towards the wheel's center,
             // instead it is resolved along the global Y axis and applied
             // This helps maintain velocity over speed bumps, however may be unrealistic
-            if (fakeNormals)
+            if (useFakeNormals)
                 SpringForce = Vector3.up * force;
             else
             {
@@ -307,7 +256,7 @@ namespace Adrenak.Tork {
             if (!active_hit_data.hasHit) return;
 
             // sample velocity
-            internalData.velocity = rigidbody.GetPointVelocity(active_hit_data.point);
+            sharedData.velocity = rigidbody.GetPointVelocity(active_hit_data.point);
 
             // Contact basis (can be different from wheel basis)
             Vector3 normal = active_hit_data.normal;// Hit.normal;
@@ -319,8 +268,8 @@ namespace Adrenak.Tork {
             float multiplier = Mathf.Cos(angle * Mathf.Deg2Rad);
 
             // Calculate sliding velocity (velocity without normal force)
-            Vector3 sideVel = Vector3.Dot(internalData.velocity, side) * side * multiplier;
-            Vector3 forwardVel = Vector3.Dot(internalData.velocity, forward) * forward * multiplier;
+            Vector3 sideVel = Vector3.Dot(sharedData.velocity, side) * side * multiplier;
+            Vector3 forwardVel = Vector3.Dot(sharedData.velocity, forward) * forward * multiplier;
             Vector3 velocity2D = sideVel + forwardVel;
 
             // contact forward normal
@@ -337,7 +286,7 @@ namespace Adrenak.Tork {
             internalData.longForce *= 1 - rollingFriction;
 
             // Apply brake force
-            var brakeForceMag = brakeTorque / wheelConfig.wheelRadius;
+            var brakeForceMag = sharedData.brakeTorque / wheelConfig.wheelRadius;
             brakeForceMag = Mathf.Clamp(brakeForceMag, 0, internalData.longForce.magnitude);
             internalData.longForce -= internalData.longForce.normalized * brakeForceMag;
             frictionForce -= internalData.longForce;
@@ -345,8 +294,8 @@ namespace Adrenak.Tork {
             Debug.DrawRay(active_hit_data.point, frictionForce, Color.blue);
             rigidbody.AddForceAtPosition(frictionForce * rigidbody.mass, active_hit_data.point); //Hit.point
 
-            Debug.DrawRay(active_hit_data.point, forward * motorTorque / wheelConfig.wheelRadius * forwardGrip, Color.magenta);
-            rigidbody.AddForceAtPosition(forward * motorTorque / wheelConfig.wheelRadius * forwardGrip, active_hit_data.point);//Hit.point
+            Debug.DrawRay(active_hit_data.point, forward * sharedData.motorTorque / wheelConfig.wheelRadius * forwardGrip, Color.magenta);
+            rigidbody.AddForceAtPosition(forward * sharedData.motorTorque / wheelConfig.wheelRadius * forwardGrip, active_hit_data.point);//Hit.point
 
 		}
 
@@ -388,6 +337,31 @@ namespace Adrenak.Tork {
             [Header("Layers")]
             public LayerMask layer_mask;
         }
+        [Serializable]
+        public struct InternalData
+        {
+            public float local_hit_distance;
+            public Vector3 local_hit_point;
+            public float hit_radius;
+            public float full_hit_distance;
+            public float full_ray_length;
+            public float suspension_distance;
+            public float fakedScale;
+            public float localUpHitNormalDot;
+            public Vector3 forceDirection;
+            public Vector3 latForce;
+            public Vector3 longForce;
+            public Vector3 momentum;
+        }
 
+        [Serializable]
+        public struct SharedData
+        {
+            public Vector3 velocity;
+            public float steerAngle;
+            public float motorTorque;
+            public float brakeTorque;
+            public bool isGrounded;
+        }
     }
 }

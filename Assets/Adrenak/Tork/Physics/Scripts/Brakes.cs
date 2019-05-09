@@ -35,11 +35,11 @@ namespace Adrenak.Tork {
 			else
 				fr = fl = rr = rl = 1;
 
-			m_FrontLeft.brakeTorque = value * maxTorque * fl;
-			m_FrontRight.brakeTorque = value * maxTorque * fr;
+			m_FrontLeft.sharedData.brakeTorque = value * maxTorque * fl;
+			m_FrontRight.sharedData.brakeTorque = value * maxTorque * fr;
 
-			m_RearLeft.brakeTorque = value * maxTorque * rl;
-			m_RearRight.brakeTorque = value * maxTorque * rr;
+			m_RearLeft.sharedData.brakeTorque = value * maxTorque * rl;
+			m_RearRight.sharedData.brakeTorque = value * maxTorque * rr;
 		}
 	}
 }

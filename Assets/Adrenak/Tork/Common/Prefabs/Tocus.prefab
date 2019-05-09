@@ -280,11 +280,7 @@ MonoBehaviour:
   sidewaysGrip: 1
   forwardGrip: 1
   rollingFriction: 0.1
-  fakeNormals: 1
-  steerAngle: 0
-  motorTorque: 0
-  brakeTorque: 0
-  isGrounded: 0
+  useFakeNormals: 0
   CompressionDistance: 0
   CompressionRatio: 0
   SpringForce: {x: 0, y: 0, z: 0}
@@ -301,7 +297,12 @@ MonoBehaviour:
     latForce: {x: 0, y: 0, z: 0}
     longForce: {x: 0, y: 0, z: 0}
     momentum: {x: 0, y: 0, z: 0}
+  sharedData:
     velocity: {x: 0, y: 0, z: 0}
+    steerAngle: 0
+    motorTorque: 0
+    brakeTorque: 0
+    isGrounded: 0
   active_hit_data:
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}
@@ -449,11 +450,7 @@ MonoBehaviour:
   sidewaysGrip: 1
   forwardGrip: 1
   rollingFriction: 0.1
-  fakeNormals: 1
-  steerAngle: 0
-  motorTorque: 0
-  brakeTorque: 0
-  isGrounded: 0
+  useFakeNormals: 0
   CompressionDistance: 0
   CompressionRatio: 0
   SpringForce: {x: 0, y: 0, z: 0}
@@ -470,7 +467,12 @@ MonoBehaviour:
     latForce: {x: 0, y: 0, z: 0}
     longForce: {x: 0, y: 0, z: 0}
     momentum: {x: 0, y: 0, z: 0}
+  sharedData:
     velocity: {x: 0, y: 0, z: 0}
+    steerAngle: 0
+    motorTorque: 0
+    brakeTorque: 0
+    isGrounded: 0
   active_hit_data:
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}
@@ -822,11 +824,7 @@ MonoBehaviour:
   sidewaysGrip: 1
   forwardGrip: 1
   rollingFriction: 0.1
-  fakeNormals: 1
-  steerAngle: 0
-  motorTorque: 0
-  brakeTorque: 0
-  isGrounded: 0
+  useFakeNormals: 0
   CompressionDistance: 0
   CompressionRatio: 0
   SpringForce: {x: 0, y: 0, z: 0}
@@ -843,7 +841,12 @@ MonoBehaviour:
     latForce: {x: 0, y: 0, z: 0}
     longForce: {x: 0, y: 0, z: 0}
     momentum: {x: 0, y: 0, z: 0}
+  sharedData:
     velocity: {x: 0, y: 0, z: 0}
+    steerAngle: 0
+    motorTorque: 0
+    brakeTorque: 0
+    isGrounded: 0
   active_hit_data:
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}
@@ -2074,11 +2077,7 @@ MonoBehaviour:
   sidewaysGrip: 1
   forwardGrip: 1
   rollingFriction: 0.1
-  fakeNormals: 1
-  steerAngle: 0
-  motorTorque: 0
-  brakeTorque: 0
-  isGrounded: 0
+  useFakeNormals: 0
   CompressionDistance: 0
   CompressionRatio: 0
   SpringForce: {x: 0, y: 0, z: 0}
@@ -2095,7 +2094,12 @@ MonoBehaviour:
     latForce: {x: 0, y: 0, z: 0}
     longForce: {x: 0, y: 0, z: 0}
     momentum: {x: 0, y: 0, z: 0}
+  sharedData:
     velocity: {x: 0, y: 0, z: 0}
+    steerAngle: 0
+    motorTorque: 0
+    brakeTorque: 0
+    isGrounded: 0
   active_hit_data:
     point: {x: 0, y: 0, z: 0}
     normal: {x: 0, y: 0, z: 0}

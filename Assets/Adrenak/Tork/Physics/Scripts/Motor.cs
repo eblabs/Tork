@@ -36,11 +36,11 @@ namespace Adrenak.Tork {
 			rl = radii[0, 1] / total;
 			rr = radii[1, 1] / total;
 			
-			m_FrontLeft.motorTorque = value * maxTorque * fl;
-			m_FrontRight.motorTorque = value * maxTorque * fr;
+			m_FrontLeft.sharedData.motorTorque = value * maxTorque * fl;
+			m_FrontRight.sharedData.motorTorque = value * maxTorque * fr;
 
-			m_RearLeft.motorTorque = value * maxTorque * rl;
-			m_RearRight.motorTorque = value * maxTorque * rr;
+			m_RearLeft.sharedData.motorTorque = value * maxTorque * rl;
+			m_RearRight.sharedData.motorTorque = value * maxTorque * rr;
 		}
 	}
 }
