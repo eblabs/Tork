@@ -25,11 +25,11 @@ namespace Adrenak.Tork {
 
 				WheelHit hit;
 				if (axle.left.isGrounded)
-					rigidbody.AddForceAtPosition(wsDown * -antiRollForce, axle.left.Hit.point);
+					rigidbody.AddForceAtPosition(wsDown * -antiRollForce, axle.left.active_hit_data.point);
 			
 
 				if (axle.right.isGrounded)
-					rigidbody.AddForceAtPosition(wsDown * antiRollForce, axle.right.Hit.point);
+					rigidbody.AddForceAtPosition(wsDown * antiRollForce, axle.right.active_hit_data.point);
 			}
 		}
 	}
